@@ -29,7 +29,9 @@ end
 """
     InfError(op, result, args)
 
-Signalled by the `Inf` check when `op(args...)` produced `±Inf`.
+Signalled by the `Inf` check when `op(args...)` produced `±Inf`.  The message says whether
+this was a division by zero (an exact infinity), an overflow, or the propagation of an
+already-infinite operand.
 """
 struct InfError <: CheckError
     op::Any
@@ -40,7 +42,8 @@ end
 """
     SubnormalError(op, result, args)
 
-Signalled by the `Subnormal` check when `op(args...)` produced a subnormal number.
+Signalled by the `Subnormal` check when `op(args...)` produced a subnormal number, or
+underflowed to zero although its exact result is nonzero.
 """
 struct SubnormalError <: CheckError
     op::Any
@@ -123,11 +126,13 @@ _opname(op) = op isa Function ? string(nameof(op)) : string(op)
 _repr(x) = repr(x)
 _repr(::RoundingMode{M}) where {M} = "Round$M"
 
-# Diagnostic numbers (ratios, tolerances, bit counts) are rounded to three significant
+# Diagnostic numbers (ratios, tolerances, bit counts) are shown to three significant
 # figures for readability.
-_short(x::AbstractFloat) = replace(repr(round(Float64(x); sigdigits = 3)), r"\.0$" => "")
+_short(x::AbstractFloat) = @sprintf("%.3g", Float64(x))
 _short(x) = repr(x)
 _bits(x) = _short(-log2(Float64(x)))
+# A "how many times smaller/larger" factor: an integer when it is a modest one.
+_factor(x) = 1 <= x < 1e6 ? string(round(Int, x)) : _short(x)
 
 """
     MathChecker.formatcall(op, args) -> String
@@ -163,17 +168,55 @@ function _lines(err::NaNError)
     return ["$(_header(err)) $what."]
 end
 
-_lines(err::InfError) = ["$(_header(err)) produced $(_repr(err.result))."]
+# Distinguish the IEEE DIVBYZERO case (an exact infinity from finite operands) from OVERFLOW
+# (a finite exact result too large to represent) and from propagation of an infinite operand.
+function _infinity_reason(err::InfError)
+    op, args, r = err.op, err.args, err.result
+    nums = filter(x -> x isa Number, collect(args))
+    if any(isinf, nums)
+        return ["an operand was already infinite."]
+    end
+    exact =
+        (op === (/) && length(args) == 2 && iszero(args[2])) ||
+        (op === inv && length(args) == 1 && iszero(args[1])) ||
+        (op in (log, log2, log10) && length(args) == 1 && iszero(args[1])) ||
+        (op === log1p && length(args) == 1 && args[1] == -1) ||
+        (
+            op === (^) &&
+            length(args) == 2 &&
+            iszero(args[1]) &&
+            args[2] isa Real &&
+            args[2] < 0
+        )
+    exact && return ["division by zero (the exact result is infinite)."]
+    T = typeof(r)
+    if T <: AbstractFloat
+        return [
+            "overflow (the exact result is finite but exceeds floatmax($T) = $(_short(floatmax(T)))).",
+        ]
+    end
+    return ["overflow."]
+end
+
+_lines(err::InfError) =
+    ["$(_header(err)) produced $(_repr(err.result)):", _infinity_reason(err)...]
 
 function _lines(err::SubnormalError)
     r = err.result
     T = typeof(r)
+    if iszero(r)
+        tiny = T <: AbstractFloat ? " (≈ $(_short(nextfloat(zero(T)))))" : ""
+        return [
+            "$(_header(err)) produced $(_repr(r)), having underflowed:",
+            "the exact result is nonzero but smaller than the smallest positive $T$tiny.",
+        ]
+    end
     first = "$(_header(err)) produced the subnormal number $(_repr(r)),"
     if T <: AbstractFloat
         fm = floatmin(T)
         return [
             first,
-            "which is $(_short(fm / abs(r)))× smaller than the smallest normal $T (floatmin = $(_short(fm))).",
+            "which is $(_factor(fm / abs(r)))× smaller than the smallest normal $T (floatmin = $(_short(fm))).",
         ]
     else
         return [first[1:(end-1)] * "."]

@@ -73,6 +73,47 @@ issubnormal(x::Real) = false
     return nothing
 end
 
+# Underflow all the way to zero.  IEEE's UNDERFLOW flag covers results that are tiny *and*
+# inexact; a zero result from an operation whose exact result cannot be zero is the extreme
+# case, and is not subnormal, so it needs its own test.  Only operations for which "the
+# exact result is nonzero" can be decided from the operands are covered.
+const _UnderflowUnary = Union{
+    typeof(exp),
+    typeof(exp2),
+    typeof(exp10),
+    typeof(expm1),
+    typeof(log1p),
+    typeof(sqrt),
+    typeof(cbrt),
+    typeof(sin),
+    typeof(tan),
+    typeof(asin),
+    typeof(atan),
+    typeof(sinh),
+    typeof(tanh),
+    typeof(asinh),
+    typeof(atanh),
+}
+@inline _nonzerofinite(x) = !iszero(x) && isfinite(x)
+@inline function _underflowed(op, r, args, exactnonzero::Bool)
+    if issubnormal(r) || (iszero(r) && exactnonzero)
+        fail(SubnormalError(op, r, args))
+    end
+    return nothing
+end
+@inline check_subnormal(op::typeof(exp), r, a) = _underflowed(op, r, (a,), isfinite(a))
+@inline check_subnormal(op::typeof(exp2), r, a) = _underflowed(op, r, (a,), isfinite(a))
+@inline check_subnormal(op::typeof(exp10), r, a) = _underflowed(op, r, (a,), isfinite(a))
+@inline check_subnormal(op::_UnderflowUnary, r, a) =
+    _underflowed(op, r, (a,), _nonzerofinite(a))
+@inline function check_subnormal(op::Union{typeof(*),typeof(/)}, r, a, b)
+    return _underflowed(op, r, (a, b), _nonzerofinite(a) && _nonzerofinite(b))
+end
+@inline check_subnormal(op::typeof(ldexp), r, a, n) =
+    _underflowed(op, r, (a, n), _nonzerofinite(a))
+@inline check_subnormal(op::typeof(^), r, a, b) =
+    _underflowed(op, r, (a, b), _nonzerofinite(a) && isfinite(b))
+
 # ---------------------------------------------------------------------------------------
 # Rounding — error-free transformations
 

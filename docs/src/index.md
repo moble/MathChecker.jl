@@ -65,7 +65,8 @@ error names the operation and its operands:
 
 ```jldoctest quickstart
 julia> x / 0
-ERROR: InfError: 1.0 / 0.0 produced Inf.
+ERROR: InfError: 1.0 / 0.0 produced Inf:
+       division by zero (the exact result is infinite).
 [...]
 
 julia> (x - 1) / (x - 1)
@@ -86,8 +87,8 @@ Checked{Float64, true, true, true, true, false, false, false}(1.0e-9)
 
 julia> (1 + z) - 1
 ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
-       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1.0e-9
-       is below the tolerance 1.49e-8 (26 bits).
+       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1e-09
+       is below the tolerance 1.49e-08 (26 bits).
 [...]
 ```
 

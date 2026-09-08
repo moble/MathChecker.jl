@@ -17,16 +17,17 @@ the failing call:
 
 ```julia-repl
 julia> checked(1.0) / 0
-ERROR: InfError: 1.0 / 0.0 produced Inf.
+ERROR: InfError: 1.0 / 0.0 produced Inf:
+       division by zero (the exact result is infinite).
 
 julia> checked(1e-9; cancellation=true) + 1 - 1
 ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
-       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1.0e-9
-       is below the tolerance 1.49e-8 (26 bits).
+       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1e-09
+       is below the tolerance 1.49e-08 (26 bits).
 
 julia> checked(1.0; swamping=true) + 1e-20
 ERROR: SwampingError: 1.0 + 1.0e-20 produced 1.0; the operand 1.0e-20 was swamped:
-       |small| / |large| = 1.0e-20, so it made no difference to the result
+       |small| / |large| = 1e-20, so it made no difference to the result
        (anything below ≈ 1.11e-16 would be lost).
 
 julia> checked(0.1; rounding=true) + 0.2

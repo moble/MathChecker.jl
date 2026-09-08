@@ -49,7 +49,8 @@ julia> unchecked(sqrt(x + 1) * 2)
 2.8284271247461903
 
 julia> x / 0
-ERROR: InfError: 1.0 / 0.0 produced Inf.
+ERROR: InfError: 1.0 / 0.0 produced Inf:
+       division by zero (the exact result is infinite).
 
 julia> Checked{Float32}(1) + 0.5           # a Float64 literal in a Float32 computation
 ERROR: MethodError: no method matching mixed_precision(::MathChecker.PrecisionMismatch{...}, ::Float64)
@@ -59,8 +60,8 @@ check enabled, which forbids implicitly mixing it with Float64. ...
 
 julia> (1 + checked(1e-9; cancellation=true)) - 1
 ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
-       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1.0e-9
-       is below the tolerance 1.49e-8 (26 bits).
+       cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1e-09
+       is below the tolerance 1.49e-08 (26 bits).
 ```
 
 `checked` and `unchecked` work elementwise on arrays, tuples, and

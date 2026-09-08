@@ -96,10 +96,23 @@ end
         @test e isa InfError
         @test e.result == T(Inf) && e.args == (T(1), T(0))
         @test sprint(showerror, e) ==
-              "InfError: $(repr(T(1))) / $(repr(T(0))) produced $(repr(T(Inf)))."
+              "InfError: $(repr(T(1))) / $(repr(T(0))) produced $(repr(T(Inf))):\n       division by zero (the exact result is infinite)."
+        @test occursin("division by zero", sprint(showerror, signalled(() -> log(z))))
+        @test occursin("division by zero", sprint(showerror, signalled(() -> inv(z))))
+        @test occursin(
+            "an operand was already infinite",
+            sprint(showerror, signalled(() -> checked(T(Inf); precision = false) + 1)),
+        )
         e = signalled(() -> -one_ / z)
         @test e.result == -T(Inf)
-        @test endswith(sprint(showerror, e), "produced $(repr(-T(Inf))).")
+        @test occursin("produced $(repr(-T(Inf))):", sprint(showerror, e))
+        if T <: Base.IEEEFloat
+            e = signalled(() -> big_ * 2)
+            @test occursin(
+                "overflow (the exact result is finite but exceeds floatmax($T)",
+                sprint(showerror, e),
+            )
+        end
 
         # No false positives: constructing, comparing with, and inspecting Inf is fine
         inf = checked(T(Inf); precision = false)
@@ -133,16 +146,44 @@ end
         @test signalled(() -> tiny - tiny * T(0.75)) isa SubnormalError
         @test signalled(() -> prevfloat(tiny)) isa SubnormalError
         @test signalled(() -> ldexp(tiny, -3)) isa SubnormalError
+        # Underflow to zero counts too (IEEE UNDERFLOW), when the exact result is nonzero
+        for f in (
+            () -> tiny * tiny,
+            () -> tiny / floatmax(T),
+            () -> exp(checked(T(-1e6); precision = false, subnormal = true)),
+            () -> ldexp(tiny, -2000),
+            () -> tiny^3,
+            () -> sinh(tiny / 8) * tiny,
+        )
+            e = signalled(f)
+            @test e isa SubnormalError
+        end
+        e = signalled(() -> tiny * tiny)
+        @test iszero(e.result)
+        @test occursin("having underflowed:", sprint(showerror, e))
+        @test occursin("smaller than the smallest positive $T (≈ ", sprint(showerror, e))
         # No false positives
         @test signalled(() -> tiny * 2) === nothing
         @test signalled(() -> tiny - tiny) === nothing          # zero is not subnormal
+        @test signalled(() -> tiny * 0) === nothing             # exact zero
+        @test signalled(() -> 0 / tiny) === nothing
+        @test signalled(
+            () -> tiny / checked(T(Inf); precision = false, subnormal = true, inf = false),
+        ) === nothing
+        @test signalled(() -> sin(checked(T(0); precision = false, subnormal = true))) ===
+              nothing
+        @test signalled(() -> checked(T(0); precision = false, subnormal = true)^2) ===
+              nothing
         @test signalled(() -> tiny * 0) === nothing
         @test signalled(() -> sqrt(tiny)) === nothing
         # Off
         @test issubnormal(checked(floatmin(T); precision = false) / 2)
     end
-    # Types without subnormals never signal
-    @test signalled(() -> checked(floatmin(BigFloat); subnormal = true) / 2) === nothing
+    # Types without subnormals never report a subnormal, but they can still underflow to
+    # zero: MPFR flushes anything below `floatmin(BigFloat)` to exactly 0.
+    e = signalled(() -> checked(floatmin(BigFloat); subnormal = true) / 2)
+    @test e isa SubnormalError && iszero(e.result)
+    @test signalled(() -> checked(floatmin(BigFloat); subnormal = true) * 2) === nothing
     @test signalled(
         () -> checked(Double64(1e-300); precision = false, subnormal = true) / 1e10,
     ) === nothing
@@ -363,7 +404,7 @@ end
     @test r == Inf && seen[] == 1
 
     # warn_handler logs and continues
-    r = @test_logs (:warn, r"InfError: 1.0 / 0.0 produced Inf\.") with_handler(
+    r = @test_logs (:warn, r"InfError: 1.0 / 0.0 produced Inf:") with_handler(
         warn_handler,
     ) do
         x / 0
@@ -404,5 +445,6 @@ end
     @test all(startswith(l, " "^7) for l in lines[2:end])
     @test endswith(lines[end], ".") && !endswith(lines[1], ".")
     @test sprint(showerror, e) == message(e)
-    @test message(InfError(/, Inf, (1.0, 0.0))) == "InfError: 1.0 / 0.0 produced Inf."
+    @test message(InfError(/, Inf, (1.0, 0.0))) ==
+          "InfError: 1.0 / 0.0 produced Inf:\n       division by zero (the exact result is infinite)."
 end

@@ -191,9 +191,12 @@ than normal numbers and are often dramatically slower to compute with.
 Zero is not subnormal.  Constructing a `Checked` from a subnormal does
 not signal.
 
-The check uses [`MathChecker.issubnormal`](@ref), which falls back to
-`false` for types that do not implement `Base.issubnormal` (`BigFloat`
-and `Double64` have no subnormals in the IEEE sense).
+The subnormal test uses [`MathChecker.issubnormal`](@ref), which falls
+back to `false` for types that do not implement `Base.issubnormal`
+(`BigFloat` and `Double64` have no subnormals in the IEEE sense).  The
+underflow-to-zero test still applies to such types: MPFR, for
+instance, flushes any `BigFloat` below `floatmin(BigFloat)` to exactly
+zero.
 
 ## `Rounding`
 
@@ -210,3 +213,18 @@ to be exact — splitting a number into high and low parts, compensated
 summation kernels, double-double building blocks — rather than for
 general use.  Other operations (`exp`, `sin`, `hypot`, …) are not
 checked for rounding.
+
+## Relation to the IEEE 754 exception flags
+
+The IEEE 754 standard defines five exceptions that hardware signals
+through status flags.  Each has a counterpart here, evaluated per
+operation on the values themselves rather than by reading the flags
+(which Julia does not expose portably):
+
+| IEEE exception | MathChecker flag | Notes                                                                 |
+|:---------------|:-----------------|:----------------------------------------------------------------------|
+| INVALID        | `NaN`            | Stricter: also signals when a quiet `NaN` operand propagates, and on `<`, `<=`, `>`, `>=`, `cmp` with a `NaN` operand.  Julia already throws `DomainError` for `sqrt(-1.0)` and `log(-1.0)`. |
+| DIVBYZERO      | `Inf`            | Reported as "division by zero" in the message.                        |
+| OVERFLOW       | `Inf`            | Reported as "overflow" in the message.  Only the round-to-nearest case (a result of `±Inf`) is detectable; under directed rounding an overflow saturates to `floatmax`. |
+| UNDERFLOW      | `Subnormal`      | Subnormal results, plus underflow to zero where the exact result is known to be nonzero.  An exactly representable subnormal also counts. |
+| INEXACT        | `Rounding`       | Exact for `+`, `-`, `*`, `/`, `sqrt` via error-free transformations.  Not available for other functions (`exp`, `sin`, …), whose results are almost always inexact and would need higher-precision reference values. |

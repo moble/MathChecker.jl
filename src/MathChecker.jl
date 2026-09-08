@@ -31,6 +31,7 @@ Disabled checks are eliminated by the compiler, so a `Checked{Float64}` with eve
 """
 module MathChecker
 
+using Printf: @sprintf
 using Random: Random, AbstractRNG
 using ScopedValues: ScopedValue, with
 
