@@ -7,7 +7,7 @@ Wrap a value in [`Checked`](@ref) and use it exactly as you would the underlying
 After every operation, the checks selected by the type's flag parameters inspect the
 result and signal an error pointing at the offending operation:
 
-    Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
+    Checked{T, Precision, NaN, Inf, Cancellation, Absorption, Subnormal, Rounding}
 
 | Flag           | Signals when …                                          |
 |:---------------|:--------------------------------------------------------|
@@ -15,7 +15,7 @@ result and signal an error pointing at the offending operation:
 | `NaN`          | a `NaN` is produced or used as an operand                |
 | `Inf`          | `±Inf` is produced                                       |
 | `Cancellation` | `a ± b` cancels most significant bits                    |
-| `Swamping`     | an addend is too small to register                       |
+| `Absorption`     | an addend is too small to register                       |
 | `Subnormal`    | a subnormal is produced                                  |
 | `Rounding`     | `+ - * / sqrt` is inexact                                |
 
@@ -37,7 +37,7 @@ using ScopedValues: ScopedValue, with
 
 export Checked, checked, unchecked, flags, valuetype, DEFAULT_FLAGS
 export CheckError,
-    NaNError, InfError, SubnormalError, RoundingError, CancellationError, SwampingError
+    NaNError, InfError, SubnormalError, RoundingError, CancellationError, AbsorptionError
 export bitslost
 export with_handler, warn_handler, collect_failures
 

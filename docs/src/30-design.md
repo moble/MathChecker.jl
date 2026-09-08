@@ -45,10 +45,10 @@ Every `Base` function with a `Checked` method — `hypot`, `sinpi`,
 `mod`, `round`, and so on — is treated as a primitive: the wrapped
 type's implementation runs unobserved, and only the final result is
 checked.  Base's generic `hypot`, for instance, internally computes
-essentially `1 + ϵ*ϵ` with a tiny `ϵ`, which would trip the `Swamping`
-check; because `hypot` is a primitive, it does not.  The checks
-therefore report on *your* arithmetic, not on the internals of the
-library functions you call.
+essentially `1 + ϵ*ϵ` with a tiny `ϵ`, which would trip the
+`Absorption` check; because `hypot` is a primitive, it does not.  The
+checks therefore report on *your* arithmetic, not on the internals of
+the library functions you call.
 
 Functions that have no `Checked` method fall back to Julia's generic
 implementations, which are built from the primitives and are therefore

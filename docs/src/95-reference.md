@@ -32,7 +32,7 @@ InfError
 SubnormalError
 RoundingError
 CancellationError
-SwampingError
+AbsorptionError
 bitslost
 ```
 

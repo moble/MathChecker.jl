@@ -1,5 +1,5 @@
 """
-    Checked{T<:AbstractFloat, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding} <: AbstractFloat
+    Checked{T<:AbstractFloat, Precision, NaN, Inf, Cancellation, Absorption, Subnormal, Rounding} <: AbstractFloat
 
 A floating-point number of type `T` whose every operation is verified by the checks
 selected by the flag type parameters.  A `Checked` participates in arithmetic exactly like
@@ -19,7 +19,7 @@ place of `true`:
 | `NaN`          | a `NaN` is produced, or used as an operand           |                                        |
 | `Inf`          | `±Inf` is produced                                   |                                        |
 | `Cancellation` | `a ± b` loses more than half its significant bits    | a `Float64` relative tolerance         |
-| `Swamping`     | an addend is too small to change the result at all   | a `Float64` relative tolerance         |
+| `Absorption`     | an addend is too small to change the result at all   | a `Float64` relative tolerance         |
 | `Subnormal`    | a subnormal number is produced                       |                                        |
 | `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact           |                                        |
 
@@ -81,7 +81,7 @@ struct Checked{T<:AbstractFloat,P,N,I,C,S,Sb,R} <: AbstractFloat
         _validflags(P, N, I, C, S, Sb, R) || throw(
             ArgumentError(
                 "invalid Checked flags $((P, N, I, C, S, Sb, R)): each must be `false` or " *
-                "`true`; `Precision` may also be a `Type`, and `Cancellation` and `Swamping` " *
+                "`true`; `Precision` may also be a `Type`, and `Cancellation` and `Absorption` " *
                 "may also be a `Float64` tolerance",
             ),
         )
@@ -90,7 +90,7 @@ struct Checked{T<:AbstractFloat,P,N,I,C,S,Sb,R} <: AbstractFloat
 end
 
 const _FLAG_NAMES =
-    (:precision, :nan, :inf, :cancellation, :swamping, :subnormal, :rounding)
+    (:precision, :nan, :inf, :cancellation, :absorption, :subnormal, :rounding)
 
 """
     DEFAULT_FLAGS
@@ -99,7 +99,7 @@ The flags used when none are specified: `Precision`, `NaN`, and `Inf` on; everyt
 off.
 
 ```julia
-(precision = true, nan = true, inf = true, cancellation = false, swamping = false,
+(precision = true, nan = true, inf = true, cancellation = false, absorption = false,
  subnormal = false, rounding = false)
 ```
 """
@@ -108,7 +108,7 @@ const DEFAULT_FLAGS = (
     nan = true,
     inf = true,
     cancellation = false,
-    swamping = false,
+    absorption = false,
     subnormal = false,
     rounding = false,
 )
@@ -131,7 +131,7 @@ end
     flags(::Type{<:Checked})
 
 The check flags of `x` as a `NamedTuple` with fields `precision`, `nan`, `inf`,
-`cancellation`, `swamping`, `subnormal`, and `rounding`, in that order (the order of the
+`cancellation`, `absorption`, `subnormal`, and `rounding`, in that order (the order of the
 type parameters).
 """
 function flags(::Type{Checked{T,P,N,I,C,S,Sb,R}}) where {T,P,N,I,C,S,Sb,R}
@@ -140,7 +140,7 @@ function flags(::Type{Checked{T,P,N,I,C,S,Sb,R}}) where {T,P,N,I,C,S,Sb,R}
         nan = N,
         inf = I,
         cancellation = C,
-        swamping = S,
+        absorption = S,
         subnormal = Sb,
         rounding = R,
     )
@@ -166,7 +166,7 @@ valuetype(x) = valuetype(typeof(x))
         f.nan,
         f.inf,
         f.cancellation,
-        f.swamping,
+        f.absorption,
         f.subnormal,
         f.rounding,
     }
@@ -208,7 +208,7 @@ Checked(x::Real; kw...) = Checked(float(x); kw...)
 Checked(x::Rational{Q}; kw...) where {Q} = Checked(float(x); kw...)
 
 """
-    checked(x; precision=true, nan=true, inf=true, cancellation=false, swamping=false,
+    checked(x; precision=true, nan=true, inf=true, cancellation=false, absorption=false,
                subnormal=false, rounding=false)
     checked(T::Type{<:AbstractFloat}; flags...)
 

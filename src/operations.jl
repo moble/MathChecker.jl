@@ -2,7 +2,7 @@
 #
 # Every function here is treated as a *primitive*: it is evaluated on the unwrapped values
 # with the ordinary `T` method, and only the final result is checked.  This means that a
-# `hypot` or `sinpi` does not report the cancellation or swamping that happens inside
+# `hypot` or `sinpi` does not report the cancellation or absorption that happens inside
 # Base's implementation — only the user's own arithmetic is checked.
 #
 # Methods are written for a concrete `X<:Checked` so that a single definition covers every

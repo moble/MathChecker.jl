@@ -13,7 +13,7 @@
         nan = true,
         inf = true,
         cancellation = true,
-        swamping = true,
+        absorption = true,
         subnormal = true,
         rounding = true,
     )
@@ -22,7 +22,7 @@
         nan = false,
         inf = false,
         cancellation = false,
-        swamping = false,
+        absorption = false,
         subnormal = false,
         rounding = false,
     )

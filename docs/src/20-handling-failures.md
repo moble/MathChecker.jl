@@ -25,8 +25,8 @@ ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
        cancelling 29.9 of 53 significant bits: |result| / max(|a|, |b|) = 1e-09
        is below the tolerance 1.49e-08 (26 bits).
 
-julia> checked(1.0; swamping=true) + 1e-20
-ERROR: SwampingError: 1.0 + 1.0e-20 produced 1.0; the operand 1.0e-20 was swamped:
+julia> checked(1.0; absorption=true) + 1e-20
+ERROR: AbsorptionError: 1.0 + 1.0e-20 produced 1.0; the operand 1.0e-20 was absorbed:
        |small| / |large| = 1e-20, so it made no difference to the result
        (anything below ≈ 1.11e-16 would be lost).
 
@@ -42,7 +42,7 @@ ERROR: RoundingError: 0.1 + 0.2 produced 0.30000000000000004, which is inexact:
 | [`SubnormalError`](@ref)     |                                    |
 | [`RoundingError`](@ref)      | `residual` (exact − computed)      |
 | [`CancellationError`](@ref)  | `ratio` (measured), `tolerance`; see [`bitslost`](@ref) |
-| [`SwampingError`](@ref)      | `swamped` (index into `args`), `ratio`, `tolerance` |
+| [`AbsorptionError`](@ref)      | `absorbed` (index into `args`), `ratio`, `tolerance` |
 
 Every message shows the operands and result in full, and the threshold
 checks show the measured quantity next to the threshold it violated,
@@ -63,7 +63,7 @@ handler and returns its result together with the list of failures:
 
 ```julia
 result, failures = collect_failures() do
-    myalgorithm(checked(A; cancellation=true, swamping=true))
+    myalgorithm(checked(A; cancellation=true, absorption=true))
 end
 for f in failures
     println(sprint(showerror, f))
@@ -122,7 +122,7 @@ computation proceeds.  For example, to count failures by type:
 
 ```julia
 counts = Dict{DataType,Int}()
-with_handler(() -> myalgorithm(checked(A; swamping=true))) do err
+with_handler(() -> myalgorithm(checked(A; absorption=true))) do err
     counts[typeof(err)] = get(counts, typeof(err), 0) + 1
 end
 ```

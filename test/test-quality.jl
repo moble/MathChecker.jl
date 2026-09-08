@@ -14,7 +14,7 @@
             DEFAULT_FLAGS,
             ALL_OFF,
             merge(ALL_ON, (rounding = false,)),
-            merge(ALL_OFF, (cancellation = 1e-3, swamping = true)),
+            merge(ALL_OFF, (cancellation = 1e-3, absorption = true)),
         )
 
         a, b = checked(T(3); fl...), checked(T(1.5); fl...)

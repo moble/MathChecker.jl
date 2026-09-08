@@ -18,15 +18,15 @@ except that after every operation, a set of checks selected by the
 type's parameters inspects the result and signals an error that points
 at the offending operation.  The checks are:
 
-| Flag           | Signals when …                                                |
-|:---------------|:--------------------------------------------------------------|
-| `Precision`    | the value is implicitly mixed with a float of a different type |
-| `NaN`          | a `NaN` is produced, or used as an operand of any operation    |
-| `Inf`          | `±Inf` is produced                                             |
+| Flag           | Signals when …                                                  |
+|:---------------|:----------------------------------------------------------------|
+| `Precision`    | the value is implicitly mixed with a float of a different type  |
+| `NaN`          | a `NaN` is produced, or used as an operand of any operation     |
+| `Inf`          | `±Inf` is produced                                              |
 | `Cancellation` | an addition or subtraction cancels most of its significant bits |
-| `Swamping`     | an addend is too small to change the result                    |
-| `Subnormal`    | a subnormal number is produced                                 |
-| `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                     |
+| `Absorption`   | an addend is too small to change the result                     |
+| `Subnormal`    | a subnormal number is produced                                  |
+| `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                      |
 
 Because the flags are type parameters, checks that are turned off are
 eliminated by the compiler: a `Checked{Float64}` with every flag off
@@ -95,7 +95,7 @@ ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
 an existing function can be checked without modification:
 
 ```julia
-result = unchecked(myfunction(checked(A; swamping=true), checked(b; swamping=true)))
+result = unchecked(myfunction(checked(A; absorption=true), checked(b; absorption=true)))
 ```
 
 To see *all* of the problems in a computation rather than stopping at
@@ -129,7 +129,7 @@ julia> failures
   way to silently lose the extra precision of a `Double64` — becomes
   an error at the offending operation, with a hint explaining how to
   fix it.
-- **Locating loss of precision.** The `Cancellation` and `Swamping`
+- **Locating loss of precision.** The `Cancellation` and `Absorption`
   checks point at the additions and subtractions where relative
   accuracy is destroyed, and the `Rounding` check verifies that steps
   which are *meant* to be exact really are.

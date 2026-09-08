@@ -22,7 +22,7 @@ parameters inspect the result and throw an error pointing at the
 offending operation:
 
 ```julia
-Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
+Checked{T, Precision, NaN, Inf, Cancellation, Absorption, Subnormal, Rounding}
 ```
 
 | Flag           | Signals when …                                              |
@@ -31,7 +31,7 @@ Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
 | `NaN`          | a `NaN` is produced, or used as an operand                  |
 | `Inf`          | `±Inf` is produced                                          |
 | `Cancellation` | an addition or subtraction cancels most significant bits    |
-| `Swamping`     | an addend is too small to change the result                 |
+| `Absorption`     | an addend is too small to change the result                 |
 | `Subnormal`    | a subnormal number is produced                              |
 | `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                  |
 
@@ -70,7 +70,7 @@ while recording every failed check:
 
 ```julia
 result, failures = collect_failures() do
-    unchecked(myfunction(checked(A; swamping=true, cancellation=1e-3)))
+    unchecked(myfunction(checked(A; absorption=true, cancellation=1e-3)))
 end
 ```
 
@@ -105,7 +105,7 @@ Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debuggi
   value silently disappearing, e.g. `NaN < 1.0 → false`), and can
   *inject* `NaN`s at random to fuzz a program's handling of them.
   MathChecker covers more conditions (precision mixing, cancellation,
-  swamping, underflow, inexactness), selects them at compile time so
+  absorption, underflow, inexactness), selects them at compile time so
   that unused checks cost nothing, and works for any `AbstractFloat`.
 + [NaNMath.jl](https://github.com/JuliaMath/NaNMath.jl) makes
   functions *return* NaN instead of throwing `DomainError`s — the

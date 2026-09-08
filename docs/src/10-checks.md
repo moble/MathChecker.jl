@@ -7,7 +7,7 @@ CurrentModule = MathChecker
 A [`Checked`](@ref) has eight type parameters:
 
 ```julia
-Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
+Checked{T, Precision, NaN, Inf, Cancellation, Absorption, Subnormal, Rounding}
 ```
 
 `T` is the wrapped floating-point type.  Each of the remaining seven
@@ -161,11 +161,15 @@ that are not finite are never flagged (they are left to the `Inf` and
     small differences, and use a non-throwing [handler](@ref
     handling-failures) to survey them.
 
-## `Swamping`
+## `Absorption`
 
-*Signals a [`SwampingError`](@ref) when, in an addition or subtraction
-(including the additive step of `fma`/`muladd`), one operand is so
-small relative to the other that it is partly or entirely lost.*
+*Signals an [`AbsorptionError`](@ref) when, in an addition or
+subtraction (including the additive step of `fma`/`muladd`), one
+operand is so small relative to the other that it is partly or
+entirely lost.*  This is the *absorption* of the floating-point
+arithmetic literature (e.g.  Muller et al., *Handbook of
+Floating-Point Arithmetic*); the numerical-linear-algebra literature
+calls the same thing *swamping*.
 
 With the flag `true`, the test is exact: it fires when the result
 equals the larger operand although the smaller one is nonzero — the
@@ -176,12 +180,12 @@ example.  With a `Float64` tolerance, the check instead fires when
 |\text{small}| < \mathrm{tol} \cdot |\text{large}|,
 ```
 
-which catches *partial* swamping, where the low-order bits of the
-small operand are lost.  The error reports which operand was swamped.
-Adding zero is never swamping, and results that are not finite are
-never flagged.
+which catches *partial* absorption, where the low-order bits of the
+small operand are lost.  The error reports which operand was absorbed.
+Adding zero is never an absorption, and results that are not finite
+are never flagged.
 
-!!! note "Double-double types rarely swamp"
+!!! note "Double-double types rarely absorb"
     A `Double64` stores a value as an unevaluated sum of two
     `Float64`s, so `1 + 1e-300` is exactly representable and the exact
     test never fires.  Use a tolerance with such types.

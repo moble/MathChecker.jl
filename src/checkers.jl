@@ -11,7 +11,7 @@
 
 Run the checks enabled in the type `X` on `result = op(args...)` (all unwrapped).  The
 `NaN`, `Inf`, and `Subnormal` checks run first, so that a non-finite result is reported as
-such rather than as a cancellation or swamping.
+such rather than as a cancellation or absorption.
 """
 @inline function runchecks(
     ::Type{Checked{T,P,N,I,C,S,Sb,R}},
@@ -24,11 +24,11 @@ such rather than as a cancellation or swamping.
     Sb && check_subnormal(op, result, args...)
     R && check_rounding(op, result, args...)
     C === false || check_cancellation(C, op, result, args...)
-    S === false || check_swamping(S, op, result, args...)
+    S === false || check_absorption(S, op, result, args...)
     return nothing
 end
 
-# Operations with two "additive" operands, for the Cancellation and Swamping checks.
+# Operations with two "additive" operands, for the Cancellation and Absorption checks.
 const AdditiveOp = Union{typeof(+),typeof(-)}
 
 # ---------------------------------------------------------------------------------------
@@ -192,37 +192,38 @@ end
 end
 
 # ---------------------------------------------------------------------------------------
-# Swamping.  `tol` is `true` (exact test) or a Float64.
+# Absorption.  `tol` is `true` (exact test) or a Float64.
 
 # `x` and `y` are the two addends (already sign-adjusted so that r ≈ x + y); `ix` and
 # `iy` are their positions in the reported `args`.
-@inline function _swamping(tol::Bool, op, r, x, y, ix, iy, args)
+@inline function _absorption(tol::Bool, op, r, x, y, ix, iy, args)
     if isfinite(r)
         if r == x && !iszero(y)
-            fail(SwampingError(op, r, args, iy, abs(y) / abs(x), nothing))
+            fail(AbsorptionError(op, r, args, iy, abs(y) / abs(x), nothing))
         elseif r == y && !iszero(x)
-            fail(SwampingError(op, r, args, ix, abs(x) / abs(y), nothing))
+            fail(AbsorptionError(op, r, args, ix, abs(x) / abs(y), nothing))
         end
     end
     return nothing
 end
-@inline function _swamping(tol::Float64, op, r, x, y, ix, iy, args)
+@inline function _absorption(tol::Float64, op, r, x, y, ix, iy, args)
     if isfinite(r)
         t = _tolerance(tol, typeof(r))
         ax, ay = abs(x), abs(y)
         if !iszero(y) && ay < t * ax
-            fail(SwampingError(op, r, args, iy, ay / ax, t))
+            fail(AbsorptionError(op, r, args, iy, ay / ax, t))
         elseif !iszero(x) && ax < t * ay
-            fail(SwampingError(op, r, args, ix, ax / ay, t))
+            fail(AbsorptionError(op, r, args, ix, ax / ay, t))
         end
     end
     return nothing
 end
 
-@inline check_swamping(tol, op, r, args...) = nothing
-@inline check_swamping(tol, ::typeof(+), r, a, b) = _swamping(tol, +, r, a, b, 1, 2, (a, b))
-@inline check_swamping(tol, ::typeof(-), r, a, b) =
-    _swamping(tol, -, r, a, -b, 1, 2, (a, b))
-@inline function check_swamping(tol, op::Union{typeof(fma),typeof(muladd)}, r, a, b, c)
-    return _swamping(tol, op, r, a * b, c, 1, 3, (a, b, c))
+@inline check_absorption(tol, op, r, args...) = nothing
+@inline check_absorption(tol, ::typeof(+), r, a, b) =
+    _absorption(tol, +, r, a, b, 1, 2, (a, b))
+@inline check_absorption(tol, ::typeof(-), r, a, b) =
+    _absorption(tol, -, r, a, -b, 1, 2, (a, b))
+@inline function check_absorption(tol, op::Union{typeof(fma),typeof(muladd)}, r, a, b, c)
+    return _absorption(tol, op, r, a * b, c, 1, 3, (a, b, c))
 end

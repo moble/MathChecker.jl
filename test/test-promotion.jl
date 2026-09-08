@@ -27,9 +27,9 @@
         @test flags(c3 + ct).cancellation === true
         @test flags(ct + c3).cancellation === true
         @test flags(c3 + a).cancellation == 1e-3
-        s1 = checked(T(1); ALL_OFF..., swamping = 1e-2)
-        s2 = checked(T(1); ALL_OFF..., swamping = 1e-4)
-        @test flags(s1 + s2).swamping == 1e-2 == flags(s2 + s1).swamping
+        s1 = checked(T(1); ALL_OFF..., absorption = 1e-2)
+        s2 = checked(T(1); ALL_OFF..., absorption = 1e-4)
+        @test flags(s1 + s2).absorption == 1e-2 == flags(s2 + s1).absorption
         p64 = checked(T(1); ALL_OFF..., precision = Float64)
         p32 = checked(T(1); ALL_OFF..., precision = Float32)
         pt = checked(T(1); ALL_OFF..., precision = true)

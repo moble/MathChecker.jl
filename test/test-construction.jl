@@ -18,7 +18,7 @@
             nan = true,
             inf = false,
             cancellation = 1e-3,
-            swamping = true,
+            absorption = true,
             subnormal = false,
             rounding = true,
         )
@@ -29,8 +29,8 @@
         @test flags(z) == merge(DEFAULT_FLAGS, (cancellation = true, precision = false))
         @test flags(Checked(T(3); rounding = true)) ==
               merge(DEFAULT_FLAGS, (rounding = true,))
-        @test flags(checked(T(3); swamping = 1e-8)) ==
-              merge(DEFAULT_FLAGS, (swamping = 1e-8,))
+        @test flags(checked(T(3); absorption = 1e-8)) ==
+              merge(DEFAULT_FLAGS, (absorption = 1e-8,))
         @test flags(checked(T(3); ALL_ON...)) == ALL_ON
         @test flags(checked(T(3); ALL_OFF...)) == ALL_OFF
 

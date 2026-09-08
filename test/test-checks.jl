@@ -341,36 +341,36 @@ end
     end
 end
 
-@testitem "Swamping check" tags=[:unit, :validation, :fast] setup=[Setup] begin
+@testitem "Absorption check" tags=[:unit, :validation, :fast] setup=[Setup] begin
     using .Setup: FloatTypes, signalled
     using DoubleFloats: Double64
 
-    # A double-double can represent 1 + 5e-324 exactly, so it essentially never swamps;
+    # A double-double can represent 1 + 5e-324 exactly, so absorption essentially never happens;
     # the exact test is checked on the fixed-precision types only.
     for T in filter(!=(Double64), FloatTypes)
-        s(x; tol = true) = checked(T(x); precision = false, inf = false, swamping = tol)
+        s(x; tol = true) = checked(T(x); precision = false, inf = false, absorption = tol)
         tiny = eps(T) / 8
         e = signalled(() -> s(1) + tiny)
-        @test e isa SwampingError
+        @test e isa AbsorptionError
         @test e.op === (+) &&
               e.args == (T(1), T(tiny)) &&
-              e.swamped == 2 &&
+              e.absorbed == 2 &&
               e.tolerance === nothing
-        @test occursin("was swamped:\n       |small| / |large| = ", sprint(showerror, e))
+        @test occursin("was absorbed:\n       |small| / |large| = ", sprint(showerror, e))
         @test occursin("made no difference to the result", sprint(showerror, e))
         @test e.ratio == T(tiny)
         e = signalled(() -> tiny + s(1))
-        @test e isa SwampingError && e.swamped == 1
+        @test e isa AbsorptionError && e.absorbed == 1
         e = signalled(() -> s(1) - tiny)
-        @test e isa SwampingError && e.swamped == 2 && e.result == 1
+        @test e isa AbsorptionError && e.absorbed == 2 && e.result == 1
         e = signalled(() -> tiny - s(1))
-        @test e isa SwampingError && e.swamped == 1 && e.result == -1
-        @test signalled(() -> fma(s(1), s(1), s(tiny))) isa SwampingError
-        @test signalled(() -> muladd(s(tiny), s(1), s(1))) isa SwampingError
-        @test signalled(() -> fma(s(1), s(tiny), s(1))).swamped == 1
+        @test e isa AbsorptionError && e.absorbed == 1 && e.result == -1
+        @test signalled(() -> fma(s(1), s(1), s(tiny))) isa AbsorptionError
+        @test signalled(() -> muladd(s(tiny), s(1), s(1))) isa AbsorptionError
+        @test signalled(() -> fma(s(1), s(tiny), s(1))).absorbed == 1
 
         # No false positives
-        @test signalled(() -> s(1) + 0) === nothing              # adding zero is not swamping
+        @test signalled(() -> s(1) + 0) === nothing              # adding zero is not absorption
         @test signalled(() -> s(0) + 1) === nothing
         @test signalled(() -> s(1) + eps(T)) === nothing         # registers
         @test signalled(() -> s(1) + 1) === nothing
@@ -379,28 +379,28 @@ end
         @test signalled(() -> s(Inf) + 1) === nothing            # non-finite left to Inf check
         @test signalled(() -> s(0) - 0) === nothing
 
-        # Relative tolerance: partial swamping
+        # Relative tolerance: partial absorption
         e = signalled(() -> s(1; tol = 1e-4) + T(1e-6))
-        @test e isa SwampingError && e.swamped == 2 && e.tolerance == T(1e-4)
+        @test e isa AbsorptionError && e.absorbed == 2 && e.tolerance == T(1e-4)
         @test occursin("is below the tolerance", sprint(showerror, e))
         @test e.ratio == T(1e-6)
         @test signalled(() -> s(1; tol = 1e-4) + T(1e-3)) === nothing
-        @test signalled(() -> T(1e-6) - s(1; tol = 1e-4)).swamped == 1
+        @test signalled(() -> T(1e-6) - s(1; tol = 1e-4)).absorbed == 1
         # Off
         @test signalled(() -> checked(T(1); precision = false) + tiny) === nothing
     end
-    d(x) = checked(Double64(x); precision = false, swamping = true)
-    @test signalled(() -> d(1) + 1e-300) === nothing         # representable, so not swamped
+    d(x) = checked(Double64(x); precision = false, absorption = true)
+    @test signalled(() -> d(1) + 1e-300) === nothing         # representable, so not absorbed
     @test signalled(() -> d(1) + 1e-30) === nothing
     @test signalled(
-        () -> checked(Double64(1); precision = false, swamping = 1e-20) + 1e-30,
-    ) isa SwampingError
+        () -> checked(Double64(1); precision = false, absorption = 1e-20) + 1e-30,
+    ) isa AbsorptionError
 end
 
 @testitem "check ordering and combinations" tags=[:unit, :fast] setup=[Setup] begin
     using .Setup: ALL_ON, signalled
 
-    # Non-finite results are reported by the NaN/Inf checks, not as cancellation/swamping
+    # Non-finite results are reported by the NaN/Inf checks, not as cancellation/absorption
     x = checked(1.0; ALL_ON..., precision = false)
     @test signalled(() -> x / 0) isa InfError
     @test signalled(() -> x * 0 / 0) isa NaNError

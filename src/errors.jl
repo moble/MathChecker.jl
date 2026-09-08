@@ -10,7 +10,7 @@ the fields
 
 The concrete subtypes are [`NaNError`](@ref), [`InfError`](@ref),
 [`SubnormalError`](@ref), [`RoundingError`](@ref), [`CancellationError`](@ref), and
-[`SwampingError`](@ref).
+[`AbsorptionError`](@ref).
 """
 abstract type CheckError <: Exception end
 
@@ -84,18 +84,19 @@ struct CancellationError <: CheckError
 end
 
 """
-    SwampingError(op, result, args, swamped, ratio, tolerance)
+    AbsorptionError(op, result, args, absorbed, ratio, tolerance)
 
-Signalled by the `Swamping` check when an operand of an addition or subtraction was too
-small to (fully) register in the result.  `swamped` is the index into `args` of the
+Signalled by the `Absorption` check when an operand of an addition or subtraction was too
+small to (fully) register in the result ("absorption", also called "swamping").
+`absorbed` is the index into `args` of the
 operand that was lost, `ratio` is the measured `|small| / |large|` of the two addends, and
 `tolerance` is the relative threshold used, or `nothing` for the exact test.
 """
-struct SwampingError <: CheckError
+struct AbsorptionError <: CheckError
     op::Any
     result::Any
     args::Tuple
-    swamped::Int
+    absorbed::Int
     ratio::Any
     tolerance::Any
 end
@@ -262,9 +263,9 @@ function _lines(err::CancellationError)
     ]
 end
 
-function _lines(err::SwampingError)
+function _lines(err::AbsorptionError)
     T = typeof(err.result)
-    first = "$(_header(err)) produced $(_repr(err.result)); the operand $(_repr(err.args[err.swamped])) was swamped:"
+    first = "$(_header(err)) produced $(_repr(err.result)); the operand $(_repr(err.args[err.absorbed])) was absorbed:"
     ratio = "|small| / |large| = $(_short(err.ratio))"
     if err.tolerance === nothing
         lines = [first, "$ratio, so it made no difference to the result"]
