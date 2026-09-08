@@ -286,7 +286,12 @@ end
               ceil(Int, y) === 3 &&
               trunc(Int, y) === 2
         @test round(Int, y, RoundDown) === 2
-        @test round(Int8, y) === round(Int8, T(2.567))
+        # (DoubleFloats lacks `trunc(::Type{Int8}, ::Double64)` on Julia 1.10.)
+        T === Double64 || @test round(Int8, y) === round(Int8, T(2.567))
+        if T <: Base.IEEEFloat   # (Base has no `round(Bool, ::BigFloat)`)
+            @test round(Bool, X(T(0.6))) === true && trunc(Bool, X(T(0.6))) === false
+            @test floor(Bool, X(T(0.6))) === false && ceil(Bool, X(T(0.6))) === true
+        end
         @test round(Int, X(T(2.5))) === round(Int, T(2.5))
         T === BigFloat || @test round(Int, X(T(2.5)), RoundNearestTiesAway) ===
               round(Int, T(2.5), RoundNearestTiesAway)

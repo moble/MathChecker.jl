@@ -27,8 +27,7 @@ jobs:
         os:
           - ubuntu-latest
           - macOS-latest
-          
-          
+
         arch:
           # "default" means the architecture of the runner executing the job
           - default

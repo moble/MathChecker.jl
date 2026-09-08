@@ -191,6 +191,10 @@ Base.trunc(::Type{I}, a::Checked) where {I<:Integer} = trunc(I, a.val)
 Base.floor(::Type{I}, a::Checked) where {I<:Integer} = floor(I, a.val)
 Base.ceil(::Type{I}, a::Checked) where {I<:Integer} = ceil(I, a.val)
 Base.unsafe_trunc(::Type{I}, a::Checked) where {I<:Integer} = unsafe_trunc(I, a.val)
+# (Base has `round(::Type{Bool}, ::AbstractFloat)` etc.; disambiguate.)
+for f in (:round, :trunc, :floor, :ceil)
+    @eval Base.$f(::Type{Bool}, a::Checked) = $f(Bool, a.val)
+end
 
 # ---------------------------------------------------------------------------------------
 # Comparisons.  `==`, `isequal`, and `isless` are the "total order" family used by

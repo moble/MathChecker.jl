@@ -4,6 +4,10 @@
     f(a, b) = sqrt(a * a + b * b) / (a - b) + fma(a, b, a) - hypot(a, b) * 2 + a^2 - b^-1
     g(a, b) = (a < b) ? round(a + b; digits = 1) : mod(a, b) + min(a, b)
 
+    # Measure inside a function with explicit arguments: `@allocated` applied to an
+    # expression that captures local variables reports 16 spurious bytes on Julia 1.10.
+    allocs(h, x, y) = (h(x, y); @allocated h(x, y))
+
     # (Rounding is left off: these inputs round, and a firing check is not the fast path.)
     for T in (Float32, Float64),
         fl in (
@@ -16,10 +20,8 @@
         a, b = checked(T(3); fl...), checked(T(1.5); fl...)
         @test @inferred(f(a, b)) isa typeof(a)
         @test @inferred(g(a, b)) isa typeof(a)
-        f(a, b)
-        g(a, b)
-        @test @allocated(f(a, b)) == 0
-        @test @allocated(g(a, b)) == 0
+        @test allocs(f, a, b) == 0
+        @test allocs(g, a, b) == 0
         @test @inferred(a + 1) isa typeof(a)
         @test @inferred(a * 2) isa typeof(a)
         @test @inferred(a + b) isa typeof(a)
@@ -30,7 +32,7 @@
     a = checked(1.0; nan = true, inf = false)
     b = checked(1.0; nan = false, inf = true)
     @test @inferred(a + b) isa Checked{Float64}
-    @test @allocated(a + b) == 0
+    @test allocs(+, a, b) == 0
     # (The keyword constructors depend on constant propagation of the flag *values*, which
     # `@inferred` cannot see; the positional form is always inferrable.)
     @test @inferred(Checked{Float64,true,true,true,1e-3,false,false,false}(1)) isa
