@@ -1,6 +1,6 @@
 name = "MathChecker"
 uuid = "9e940fde-bfd5-4ae9-9128-2bd0792124e9"
-version = "0.2.1"
+version = "1.0.0"
 authors = ["Michael Boyle <michael.oliver.boyle@gmail.com>"]
 
 [workspace]
