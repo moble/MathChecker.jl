@@ -10,9 +10,17 @@
 
 *Floating-point numbers that check their own arithmetic.*
 
-`Checked{T}` wraps a floating-point number and behaves exactly like it — except that
-after every operation, the checks selected by its type parameters inspect the result and
-throw an error pointing at the offending operation:
+> **Written with Claude.** The design of this package was specified by
+> Michael Boyle, but the implementation, tests, and documentation were
+> produced by [Claude](https://claude.ai) (Anthropic's AI model)
+> working in Claude Code, and then reviewed by a human. Please read
+> the code with that in mind, and report anything suspicious as an
+> issue.
+
+`Checked{T}` wraps a floating-point number and behaves exactly like it
+— except that after every operation, the checks selected by its type
+parameters inspect the result and throw an error pointing at the
+offending operation:
 
 ```julia
 Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
@@ -28,8 +36,9 @@ Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
 | `Subnormal`    | a subnormal number is produced                              |
 | `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                  |
 
-Checks that are turned off are eliminated by the compiler, so a `Checked{Float64}` with
-every flag off compiles to the same instructions as a `Float64`.
+Checks that are turned off are eliminated by the compiler, so a
+`Checked{Float64}` with every flag off compiles to the same
+instructions as a `Float64`.
 
 ```julia
 julia> using MathChecker
@@ -54,9 +63,10 @@ ERROR: CancellationError: 1.000000001 - 1.0 produced 1.000000082740371e-9,
        is below the tolerance 1.49e-8 (26 bits).
 ```
 
-`checked` and `unchecked` work elementwise on arrays, tuples, and complex numbers, so an
-existing function can be checked without modification, and `collect_failures` runs a
-computation to completion while recording every failed check:
+`checked` and `unchecked` work elementwise on arrays, tuples, and
+complex numbers, so an existing function can be checked without
+modification, and `collect_failures` runs a computation to completion
+while recording every failed check:
 
 ```julia
 result, failures = collect_failures() do
@@ -64,8 +74,9 @@ result, failures = collect_failures() do
 end
 ```
 
-See the [documentation](https://moble.github.io/MathChecker.jl/dev) for the precise
-semantics of each check, the handler mechanism, and design notes.
+See the [documentation](https://moble.github.io/MathChecker.jl/dev)
+for the precise semantics of each check, the handler mechanism, and
+design notes.
 
 ## Installation
 
@@ -76,5 +87,10 @@ Pkg.add(url="https://github.com/moble/MathChecker.jl")
 
 ## Acknowledgements
 
-The `NaN` check generalizes the `NaNCheck` type from
-[a Julia Discourse post by Brian Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).
+This package was written by Claude (Anthropic) in Claude Code, from a
+design brief and under the direction of Michael Boyle; see the notice
+at the top of this file.
+
+The `NaN` check generalizes the `NaNCheck` type from [a Julia
+Discourse post by Brian
+Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).

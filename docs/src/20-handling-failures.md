@@ -4,14 +4,16 @@ CurrentModule = MathChecker
 
 # [Handling failures](@id handling-failures)
 
-When a check fails, the operation constructs a [`CheckError`](@ref) describing what
-happened and passes it to the current *handler*, a function stored in the scoped value
-[`MathChecker.handler`](@ref).  The default handler is `throw`.
+When a check fails, the operation constructs a [`CheckError`](@ref)
+describing what happened and passes it to the current *handler*, a
+function stored in the scoped value [`MathChecker.handler`](@ref).
+The default handler is `throw`.
 
 ## The errors
 
-Every error records the operation `op`, its unwrapped operands `args`, and the unwrapped
-`result`, and prints as a readable description of the failing call:
+Every error records the operation `op`, its unwrapped operands `args`,
+and the unwrapped `result`, and prints as a readable description of
+the failing call:
 
 ```julia-repl
 julia> checked(1.0) / 0
@@ -41,20 +43,22 @@ ERROR: RoundingError: 0.1 + 0.2 produced 0.30000000000000004, which is inexact:
 | [`CancellationError`](@ref)  | `ratio` (measured), `tolerance`; see [`bitslost`](@ref) |
 | [`SwampingError`](@ref)      | `swamped` (index into `args`), `ratio`, `tolerance` |
 
-Every message shows the operands and result in full, and the threshold checks show the
-measured quantity next to the threshold it violated, in the same units.  Long messages
-continue on lines indented to line up under the error name; the whole message is
-available as a string from [`MathChecker.message`](@ref).
+Every message shows the operands and result in full, and the threshold
+checks show the measured quantity next to the threshold it violated,
+in the same units.  Long messages continue on lines indented to line
+up under the error name; the whole message is available as a string
+from [`MathChecker.message`](@ref).
 
-Because the error is thrown from inside the arithmetic operator, the stack trace leads
-directly to the line of user code that performed the operation.
+Because the error is thrown from inside the arithmetic operator, the
+stack trace leads directly to the line of user code that performed the
+operation.
 
 ## Surveying all failures
 
-Throwing at the first problem is right for hunting a `NaN`, but the heuristic checks are
-more useful when one can see every place they fire.  [`collect_failures`](@ref) runs a
-function with a recording handler and returns its result together with the list of
-failures:
+Throwing at the first problem is right for hunting a `NaN`, but the
+heuristic checks are more useful when one can see every place they
+fire.  [`collect_failures`](@ref) runs a function with a recording
+handler and returns its result together with the list of failures:
 
 ```julia
 result, failures = collect_failures() do
@@ -82,9 +86,10 @@ end
 
 ## Custom handlers
 
-[`with_handler`](@ref)`(f, h)` calls `f()` with the handler set to any function `h` of
-one argument.  If `h` returns, the operation that failed the check returns its (possibly
-non-finite) result and the computation proceeds.  For example, to count failures by type:
+[`with_handler`](@ref)`(f, h)` calls `f()` with the handler set to any
+function `h` of one argument.  If `h` returns, the operation that
+failed the check returns its (possibly non-finite) result and the
+computation proceeds.  For example, to count failures by type:
 
 ```julia
 counts = Dict{DataType,Int}()
@@ -93,9 +98,10 @@ with_handler(() -> myalgorithm(checked(A; swamping=true))) do err
 end
 ```
 
-The handler is a `ScopedValue`, so it is dynamically scoped — it applies to everything
-called from `f`, however deep — and task-local, so it is safe to use different handlers on
-different threads.  It can also be set directly with `ScopedValues.with`:
+The handler is a `ScopedValue`, so it is dynamically scoped — it
+applies to everything called from `f`, however deep — and task-local,
+so it is safe to use different handlers on different threads.  It can
+also be set directly with `ScopedValues.with`:
 
 ```julia
 using ScopedValues
@@ -104,5 +110,5 @@ with(MathChecker.handler => err -> nothing) do
 end
 ```
 
-Custom handlers are only invoked on the *failure* path, so they add no cost to operations
-whose checks pass.
+Custom handlers are only invoked on the *failure* path, so they add no
+cost to operations whose checks pass.

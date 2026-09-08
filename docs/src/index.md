@@ -6,10 +6,18 @@ CurrentModule = MathChecker
 
 *Floating-point numbers that check their own arithmetic.*
 
-MathChecker provides one type, [`Checked`](@ref), which wraps any floating-point number
-and behaves exactly like it in arithmetic — except that after every operation, a set of
-checks selected by the type's parameters inspects the result and signals an error that
-points at the offending operation.  The checks are:
+!!! warning "Written with Claude"
+    The design of this package was specified by me, Mike Boyle, but
+    the implementation, tests, and this documentation were produced by
+    [Claude](https://claude.ai) (Anthropic's AI model) working in
+    Claude Code, and then I reviewed it.  Please read the code with
+    that in mind, and report anything suspicious as an issue.
+
+MathChecker provides one type, [`Checked`](@ref), which wraps any
+floating-point number and behaves exactly like it in arithmetic —
+except that after every operation, a set of checks selected by the
+type's parameters inspects the result and signals an error that points
+at the offending operation.  The checks are:
 
 | Flag           | Signals when …                                                |
 |:---------------|:--------------------------------------------------------------|
@@ -21,9 +29,9 @@ points at the offending operation.  The checks are:
 | `Subnormal`    | a subnormal number is produced                                 |
 | `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                     |
 
-Because the flags are type parameters, checks that are turned off are eliminated by the
-compiler: a `Checked{Float64}` with every flag off compiles to the same instructions as a
-`Float64`.
+Because the flags are type parameters, checks that are turned off are
+eliminated by the compiler: a `Checked{Float64}` with every flag off
+compiles to the same instructions as a `Float64`.
 
 ## Installation
 
@@ -51,9 +59,9 @@ julia> unchecked(y)              # get the plain value back
 2.8284271247461903
 ```
 
-By default the `Precision`, `NaN`, and `Inf` checks are on — the three that never produce
-false positives.  When something goes wrong, the error names the operation and its
-operands:
+By default the `Precision`, `NaN`, and `Inf` checks are on — the three
+that never produce false positives.  When something goes wrong, the
+error names the operation and its operands:
 
 ```jldoctest quickstart
 julia> x / 0
@@ -90,8 +98,9 @@ an existing function can be checked without modification:
 result = unchecked(myfunction(checked(A; swamping=true), checked(b; swamping=true)))
 ```
 
-To see *all* of the problems in a computation rather than stopping at the first, use
-[`collect_failures`](@ref) (or another [handler](@ref handling-failures)):
+To see *all* of the problems in a computation rather than stopping at
+the first, use [`collect_failures`](@ref) (or another [handler](@ref
+handling-failures)):
 
 ```jldoctest quickstart
 julia> result, failures = collect_failures() do
@@ -107,20 +116,23 @@ julia> failures
 
 ## Uses
 
-- **Hunting a `NaN` or `Inf`.** Wrap the inputs, and the first operation that produces a
-  non-finite value throws, with a stack trace to the line that did it.  (This use, and
-  the original implementation, come from
-  [a Discourse post by Brian Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).)
+- **Hunting a `NaN` or `Inf`.** Wrap the inputs, and the first
+  operation that produces a non-finite value throws, with a stack
+  trace to the line that did it.  (This use, and the original
+  implementation, come from [a Discourse post by Brian
+  Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).)
 - **Detecting the use of uninitialized memory.** Fill an array with
-  `Checked{Float64}(NaN)`; constructors never signal, but the first arithmetic on an
-  element that was never assigned will.
-- **Keeping a `Float32`, `Double64`, or `BigFloat` computation pure.** With the
-  `Precision` check, a stray `Float64` literal — the classic way to silently lose the
-  extra precision of a `Double64` — becomes an error at the offending operation, with a
-  hint explaining how to fix it.
-- **Locating loss of precision.** The `Cancellation` and `Swamping` checks point at the
-  additions and subtractions where relative accuracy is destroyed, and the `Rounding`
-  check verifies that steps which are *meant* to be exact really are.
+  `Checked{Float64}(NaN)`; constructors never signal, but the first
+  arithmetic on an element that was never assigned will.
+- **Keeping a `Float32`, `Double64`, or `BigFloat` computation pure.**
+  With the `Precision` check, a stray `Float64` literal — the classic
+  way to silently lose the extra precision of a `Double64` — becomes
+  an error at the offending operation, with a hint explaining how to
+  fix it.
+- **Locating loss of precision.** The `Cancellation` and `Swamping`
+  checks point at the additions and subtractions where relative
+  accuracy is destroyed, and the `Rounding` check verifies that steps
+  which are *meant* to be exact really are.
 
 ## Contents
 
