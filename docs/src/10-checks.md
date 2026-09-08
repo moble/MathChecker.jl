@@ -207,12 +207,12 @@ zero.
 
 ## `Rounding`
 
-*Signals a [`RoundingError`](@ref) when `+`, `-`, `*`, `/`, or `sqrt`
-produces a result that differs from the exact mathematical result —
-that is, whenever the operation rounded.*  The residual is computed
-with an error-free transformation (TwoSum for `+` and `-`; `fma`-based
-residuals for `*`, `/`, and `sqrt`) and reported in the error.  `T`
-must support `fma`.
+*Signals a [`RoundingError`](@ref) when* `+`, `-`, `*`, `/`, *or*
+`sqrt` *produces a result that differs from the exact mathematical
+result — that is, whenever the operation rounded.*  The residual is
+computed with an error-free transformation (TwoSum for `+` and `-`;
+`fma`-based residuals for `*`, `/`, and `sqrt`) and reported in the
+error.  `T` must support `fma`.
 
 This is an extremely strict check: `0.1 + 0.2` fails it.  It is
 intended for verifying the steps of an algorithm that are *designed*
