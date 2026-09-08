@@ -11,7 +11,7 @@
 *Floating-point numbers that check their own arithmetic.*
 
 > **Written with Claude.** The design of this package was specified by
-> me, Mike Boyle, but the implementation, tests, and this
+> me, Mike Boyle, but the implementation, tests, and much of the
 > documentation were produced by Anthropic's Claude, and then I
 > reviewed it.  Please read the code with that in mind, and report
 > anything suspicious as an issue.
@@ -31,7 +31,7 @@ Checked{T, Precision, NaN, Inf, Cancellation, Absorption, Subnormal, Rounding}
 | `NaN`          | a `NaN` is produced, or used as an operand                  |
 | `Inf`          | `±Inf` is produced                                          |
 | `Cancellation` | an addition or subtraction cancels most significant bits    |
-| `Absorption`     | an addend is too small to change the result                 |
+| `Absorption`   | an addend is too small to change the result                 |
 | `Subnormal`    | a subnormal number is produced                              |
 | `Rounding`     | `+`, `-`, `*`, `/`, or `sqrt` is not exact                  |
 
@@ -87,13 +87,14 @@ Pkg.add(url="https://github.com/moble/MathChecker.jl")
 
 ## Acknowledgements
 
-This package was written by Claude (Anthropic) in Claude Code, from a
+This package was largely written by Anthropic's Claude LLM, from a
 design brief and under the direction of Michael Boyle; see the notice
 at the top of this file.
 
-The `NaN` check generalizes the `NaNCheck` type from [a Julia
-Discourse post by Brian
-Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).  That post, ultimately, inspired this package.
+The design generalizes the `NaNCheck` type from [a Julia Discourse
+post by Brian
+Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).
+That post, ultimately, inspired this package.
 
 ## Related packages
 
