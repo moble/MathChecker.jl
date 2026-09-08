@@ -1,0 +1,13 @@
+# Changes here will be overwritten by Copier
+AddPrecommitUpdateCI: false
+Authors: Michael Boyle <michael.oliver.boyle@gmail.com>
+JuliaMinVersion: '1.10'
+License: MIT
+LicenseCopyrightHolders: Michael Boyle
+PackageName: MathChecker
+PackageOwner: moble
+PackageUUID: 9e940fde-bfd5-4ae9-9128-2bd0792124e9
+StrategyConfirmIncluded: false
+StrategyLevel: 2
+StrategyReviewExcluded: false
+_src_path: /Users/boyle/.julia/packages/BestieTemplate/MPEqY
