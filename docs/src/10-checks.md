@@ -84,8 +84,6 @@ apply to:
 
 - **Explicit constructors**: `Float64(x)`, `Checked{Float64}(x)`, and
   `checked(x)` are deliberate conversions and always work.
-- **Functions that never promote**, such as `copysign(x, y)` and
-  `flipsign(x, y)`, which only read the sign of `y`.
 - **Conversion to a third-party float type** (`Double64(x)`, or
   storing into a `Vector{Double64}`), which goes through that type's
   own `(::Type{Foo})(x::Real)` constructor.  The reverse direction — a
@@ -98,15 +96,21 @@ apply to:
 
 ## `NaN`
 
-*Signals a [`NaNError`](@ref) when an operation produces a `NaN`, or
-when a `NaN` is an operand of `<`, `<=`, `>`, `>=`, or `cmp`.*  This
-turns a quiet NaN into a *signaling* one: the first operation that
-produces or consumes a `NaN` throws, with a stack trace to the
-culprit.
+*Signals a [`NaNError`](@ref) when an operation produces a `NaN`, or when any operand of
+an operation is a `NaN`.*  This gives a `NaN` the semantics of a *signaling* NaN: the first
+operation that touches it throws, with a stack trace to the culprit.  The message
+distinguishes the three stages of a `NaN`'s life (the terminology is TrackedFloats.jl's):
 
-Constructing a `Checked` from `NaN` does **not** signal, so sentinel
-values can be created.  The classic use is detecting reads of
-uninitialized memory:
+- **generated** — `0.0 / 0.0`, `Inf - Inf`: a `NaN` appears from non-`NaN` operands (IEEE's
+  INVALID exception);
+- **propagated** — `NaN + 1.0`: a `NaN` operand gives a `NaN` result;
+- **consumed** — `NaN < 1.0 → false`, `NaN^0 → 1.0`, `copysign(1.0, NaN) → 1.0`: a
+  `NaN` operand gives an ordinary result.  This is the dangerous case, where a detectable
+  problem silently becomes a wrong answer; a `maximum` written with `<` will happily skip a
+  `NaN` and return the wrong element.
+
+Constructing a `Checked` from `NaN` does **not** signal, so sentinel values can be created.
+The classic use is detecting reads of uninitialized memory:
 
 ```julia
 A = fill(Checked{Float64}(NaN), n)   # instead of Vector{Float64}(undef, n)
@@ -114,10 +118,9 @@ A = fill(Checked{Float64}(NaN), n)   # instead of Vector{Float64}(undef, n)
 sum(A)                               # throws at the first element never assigned
 ```
 
-The total-order predicates `==`, `isequal`, and `isless` are *not*
-checked, so that `sort`, `unique`, `Dict`s, and `hash` keep working on
-arrays containing sentinels.  The inspection functions `isnan`,
-`isfinite`, etc. never signal.
+The total-order functions `==`, `isequal`, and `isless` and the inspection functions
+`isnan`, `isfinite`, etc. are *not* checked, so that `sort`, `unique`, `Dict`s, `hash`, and
+testing for `NaN` keep working on arrays containing sentinels.
 
 ## `Inf`
 
@@ -223,7 +226,7 @@ operation on the values themselves rather than by reading the flags
 
 | IEEE exception | MathChecker flag | Notes                                                                 |
 |:---------------|:-----------------|:----------------------------------------------------------------------|
-| INVALID        | `NaN`            | Stricter: also signals when a quiet `NaN` operand propagates, and on `<`, `<=`, `>`, `>=`, `cmp` with a `NaN` operand.  Julia already throws `DomainError` for `sqrt(-1.0)` and `log(-1.0)`. |
+| INVALID        | `NaN`            | Stricter: also signals when a quiet `NaN` operand is propagated or consumed by any operation.  Julia already throws `DomainError` for `sqrt(-1.0)` and `log(-1.0)`. |
 | DIVBYZERO      | `Inf`            | Reported as "division by zero" in the message.                        |
 | OVERFLOW       | `Inf`            | Reported as "overflow" in the message.  Only the round-to-nearest case (a result of `±Inf`) is detectable; under directed rounding an overflow saturates to `floatmax`. |
 | UNDERFLOW      | `Subnormal`      | Subnormal results, plus underflow to zero where the exact result is known to be nonzero.  An exactly representable subnormal also counts. |

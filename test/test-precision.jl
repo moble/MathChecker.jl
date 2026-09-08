@@ -41,8 +41,11 @@
         for f in fs
             @test precision_error(f)
         end
-        # (`copysign(x, s)` only reads the sign bit of `s` and never promotes.)
-        @test copysign(x, -s) == -1
+        # `copysign`/`flipsign` are routed through promotion too (so that a NaN sign operand
+        # cannot be consumed silently), and therefore also enforce the Precision check.
+        @test precision_error(() -> copysign(x, -s))
+        @test precision_error(() -> flipsign(s, x))
+        @test copysign(x, -1) == -1 && copysign(x, -T(1)) == -1
         # Mixing two Checked values of different value types, if either is strict
         y = Checked{S}(1)
         @test precision_error(() -> x + y)

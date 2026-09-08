@@ -3,6 +3,7 @@
 
 @testitem "NaN check" tags=[:unit, :validation, :fast] setup=[Setup] begin
     using .Setup: FloatTypes, signalled
+    using DoubleFloats: Double64
 
     for T in FloatTypes
         z = checked(T(0); precision = false)
@@ -42,10 +43,42 @@
         @test e.args == (T(0), T(0))
         @test isnan(e.result)
         @test sprint(showerror, e) ==
-              "NaNError: $(repr(T(0))) / $(repr(T(0))) produced NaN."
+              "NaNError: $(repr(T(0))) / $(repr(T(0))) produced NaN (no operand was NaN)."
+        e = signalled(() -> nan + 1)
+        @test endswith(sprint(showerror, e), "produced NaN, propagating the NaN operand.")
         e = signalled(() -> nan < 1)
-        @test e.op === (<)
-        @test occursin("compared a NaN", sprint(showerror, e))
+        @test e.op === (<) && e.result === false
+        @test occursin(
+            "produced false, consuming the NaN operand:\n       the NaN is silently lost here.",
+            sprint(showerror, e),
+        )
+
+        # "Kills": a NaN operand consumed into an ordinary result signals too, including
+        # through Base's non-promoting mixed-type methods
+        one_ = checked(T(1); precision = false)
+        for f in (
+            () -> nan^0,
+            () -> one_^nan,
+            () -> copysign(one_, nan),
+            () -> copysign(T(1), nan),
+            () -> copysign(1, nan),
+            () -> flipsign(nan, one_),
+            () -> flipsign(T(1), nan),
+            () -> hypot(nan, inf),
+            () -> nan > 1,
+            () -> 1 <= nan,
+            () -> cmp(nan, nan),
+            () -> cmp(nan, 1),
+            () -> nan * 0,
+            () -> min(nan, 1) + 0,
+        )
+            e = signalled(f)
+            @test e isa NaNError
+        end
+        e = signalled(() -> nan^0)
+        @test e.result == 1 && occursin("consuming the NaN operand", sprint(showerror, e))
+        # (DoubleFloats' own `<(::Double64, ::Real)` bypasses promotion, hence the check.)
+        T === Double64 || @test signalled(() -> T(1) < nan) isa NaNError
 
         # No false positives
         @test signalled(() -> z + 1) === nothing
@@ -54,6 +87,13 @@
         @test signalled(() -> isequal(nan, nan)) === nothing
         @test signalled(() -> nan == nan) === nothing
         @test signalled(() -> isless(nan, z)) === nothing
+        @test signalled(() -> isless(nan, T(0))) === nothing        # mixed isless, unchecked
+        @test signalled(() -> isless(T(0), nan)) === nothing
+        @test signalled(() -> isless(0, nan)) === nothing
+        @test signalled(
+            () -> isless(nan, checked(T(0); precision = false, inf = false)),
+        ) === nothing
+        @test signalled(() -> sort([nan, z, T(1)])) === nothing
         @test signalled(() -> sort([nan, z])) === nothing
         @test signalled(() -> hash(nan)) === nothing
         @test signalled(() -> string(nan)) === nothing

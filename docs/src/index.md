@@ -21,7 +21,7 @@ at the offending operation.  The checks are:
 | Flag           | Signals when …                                                |
 |:---------------|:--------------------------------------------------------------|
 | `Precision`    | the value is implicitly mixed with a float of a different type |
-| `NaN`          | a `NaN` is produced, or compared with `<`, `<=`, `>`, `>=`     |
+| `NaN`          | a `NaN` is produced, or used as an operand of any operation    |
 | `Inf`          | `±Inf` is produced                                             |
 | `Cancellation` | an addition or subtraction cancels most of its significant bits |
 | `Swamping`     | an addend is too small to change the result                    |
@@ -69,7 +69,7 @@ ERROR: InfError: 1.0 / 0.0 produced Inf:
 [...]
 
 julia> (x - 1) / (x - 1)
-ERROR: NaNError: 0.0 / 0.0 produced NaN.
+ERROR: NaNError: 0.0 / 0.0 produced NaN (no operand was NaN).
 [...]
 
 julia> Checked{Float32}(1) + 0.5     # a Float64 literal contaminating a Float32 computation

@@ -126,25 +126,3 @@ out.
   flags, but in performance-critical code prefer the positional form
   `Checked{T, flags...}(x)` or construct the type once with
   `checked(T; ...)`.
-
-## Related packages
-
-+ [NaNMath.jl](https://github.com/JuliaMath/NaNMath.jl) makes
-  functions *return* NaN instead of throwing `DomainError`s — the
-  opposite philosophy.
-+ [StochasticRounding.jl](https://github.com/milankl/StochasticRounding.jl)
-  and
-  [StochasticArithmetic.jl](https://github.com/ffevotte/StochasticArithmetic.jl)
-  estimate rounding error statistically by perturbing every rounding;
-  MathChecker detects it deterministically with error-free
-  transformations.
-+ [AccurateArithmetic.jl](https://github.com/JuliaMath/AccurateArithmetic.jl)
-  provides the error-free transformations (TwoSum, TwoProd) that the
-  `Rounding` check is built on, as well as compensated summation and
-  dot products.
-+ [IntervalArithmetic.jl](https://github.com/JuliaIntervals/IntervalArithmetic.jl)
-  bounds the error of a whole computation rigorously; MathChecker
-  instead flags individual suspicious operations.
-+ [OverflowContexts.jl](https://github.com/BioTurboNick/OverflowContexts.jl)
-  does for integer overflow what MathChecker does for floating-point
-  trouble, by rewriting expressions rather than wrapping values.

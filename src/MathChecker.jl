@@ -12,7 +12,7 @@ result and signal an error pointing at the offending operation:
 | Flag           | Signals when …                                          |
 |:---------------|:--------------------------------------------------------|
 | `Precision`    | mixed with a float of a different type (a dispatch error)|
-| `NaN`          | a `NaN` is produced or compared                          |
+| `NaN`          | a `NaN` is produced or used as an operand                |
 | `Inf`          | `±Inf` is produced                                       |
 | `Cancellation` | `a ± b` cancels most significant bits                    |
 | `Swamping`     | an addend is too small to register                       |

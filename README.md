@@ -28,7 +28,7 @@ Checked{T, Precision, NaN, Inf, Cancellation, Swamping, Subnormal, Rounding}
 | Flag           | Signals when …                                              |
 |:---------------|:------------------------------------------------------------|
 | `Precision`    | mixed with a float of a different type (a dispatch error)   |
-| `NaN`          | a `NaN` is produced or compared                             |
+| `NaN`          | a `NaN` is produced, or used as an operand                  |
 | `Inf`          | `±Inf` is produced                                          |
 | `Cancellation` | an addition or subtraction cancels most significant bits    |
 | `Swamping`     | an addend is too small to change the result                 |
@@ -93,4 +93,36 @@ at the top of this file.
 
 The `NaN` check generalizes the `NaNCheck` type from [a Julia
 Discourse post by Brian
-Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).
+Guenter](https://discourse.julialang.org/t/treating-nan-as-error-helping-debugging/36933/9).  That post, ultimately, inspired this package.
+
+## Related packages
+
++ [TrackedFloats.jl](https://github.com/utahplt/TrackedFloats.jl) is
+  the closest relative: `TrackedFloat64` and friends also wrap a float
+  and watch every operation for `NaN` and `Inf`.  It logs each event
+  (with a stack trace) to a file rather than throwing, classifies
+  events as *generation*, *propagation*, or *kill* (an exceptional
+  value silently disappearing, e.g. `NaN < 1.0 → false`), and can
+  *inject* `NaN`s at random to fuzz a program's handling of them.
+  MathChecker covers more conditions (precision mixing, cancellation,
+  swamping, underflow, inexactness), selects them at compile time so
+  that unused checks cost nothing, and works for any `AbstractFloat`.
++ [NaNMath.jl](https://github.com/JuliaMath/NaNMath.jl) makes
+  functions *return* NaN instead of throwing `DomainError`s — the
+  opposite philosophy.
++ [StochasticRounding.jl](https://github.com/milankl/StochasticRounding.jl)
+  and
+  [StochasticArithmetic.jl](https://github.com/ffevotte/StochasticArithmetic.jl)
+  estimate rounding error statistically by perturbing every rounding;
+  MathChecker detects it deterministically with error-free
+  transformations.
++ [AccurateArithmetic.jl](https://github.com/JuliaMath/AccurateArithmetic.jl)
+  provides the error-free transformations (TwoSum, TwoProd) that the
+  `Rounding` check is built on, as well as compensated summation and
+  dot products.
++ [IntervalArithmetic.jl](https://github.com/JuliaIntervals/IntervalArithmetic.jl)
+  bounds the error of a whole computation rigorously; MathChecker
+  instead flags individual suspicious operations.
++ [OverflowContexts.jl](https://github.com/BioTurboNick/OverflowContexts.jl)
+  does for integer overflow what MathChecker does for floating-point
+  trouble, by rewriting expressions rather than wrapping values.

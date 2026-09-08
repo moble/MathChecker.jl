@@ -85,6 +85,34 @@ with_handler(warn_handler) do
 end
 ```
 
+## Logging to a file, with stack traces
+
+A handler can record where each failure happened as well as what it was.  This one writes
+every message to a file together with the stack trace of the user code that triggered it
+(frames inside MathChecker itself are dropped):
+
+```julia
+using MathChecker: message
+
+function file_logger(io::IO)
+    return function (err)
+        println(io, message(err))
+        frames = filter(f -> !occursin("MathChecker", String(f.file)), stacktrace())
+        Base.show_backtrace(io, frames)
+        println(io, '\n')
+    end
+end
+
+open("mathchecker.log", "w") do io
+    with_handler(file_logger(io)) do
+        myalgorithm(checked(A; cancellation = true))
+    end
+end
+```
+
+Capturing a stack trace is slow (microseconds to milliseconds), which does not matter for a
+few failures but would for millions; cap the count in the handler if that is a risk.
+
 ## Custom handlers
 
 [`with_handler`](@ref)`(f, h)` calls `f()` with the handler set to any

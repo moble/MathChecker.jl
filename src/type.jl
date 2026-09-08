@@ -16,7 +16,7 @@ place of `true`:
 | Flag           | Signals when …                                       | Instead of `true` …                    |
 |:---------------|:-----------------------------------------------------|:---------------------------------------|
 | `Precision`    | implicitly mixed with a float of another type        | a `Type` of extra permitted types      |
-| `NaN`          | a `NaN` is produced, or compared with `<`, `<=`, …   |                                        |
+| `NaN`          | a `NaN` is produced, or used as an operand           |                                        |
 | `Inf`          | `±Inf` is produced                                   |                                        |
 | `Cancellation` | `a ± b` loses more than half its significant bits    | a `Float64` relative tolerance         |
 | `Swamping`     | an addend is too small to change the result at all   | a `Float64` relative tolerance         |

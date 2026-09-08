@@ -17,8 +17,10 @@ abstract type CheckError <: Exception end
 """
     NaNError(op, result, args)
 
-Signalled by the `NaN` check when `op(args...)` produced a `NaN`, or when an ordering
-comparison was attempted with a `NaN` operand.
+Signalled by the `NaN` check when `op(args...)` produced a `NaN`, or had a `NaN` operand.
+The message says whether the operation *generated* the `NaN` (no operand was `NaN`),
+*propagated* it (`NaN` in, `NaN` out), or *consumed* it (`NaN` in, ordinary value out —
+the point at which a `NaN` silently becomes a wrong answer).
 """
 struct NaNError <: CheckError
     op::Any
@@ -164,8 +166,19 @@ Base.showerror(io::IO, err::CheckError) = print(io, message(err))
 _header(err::CheckError) = "$(nameof(typeof(err))): $(formatcall(err.op, err.args))"
 
 function _lines(err::NaNError)
-    what = err.result isa Bool ? "compared a NaN" : "produced NaN"
-    return ["$(_header(err)) $what."]
+    r = err.result
+    nan_in = any(x -> x isa Number && isnan(x), err.args)
+    nan_out = r isa Number && isnan(r)
+    if nan_out && !nan_in
+        return ["$(_header(err)) produced NaN (no operand was NaN)."]
+    elseif nan_out
+        return ["$(_header(err)) produced NaN, propagating the NaN operand."]
+    else
+        return [
+            "$(_header(err)) produced $(_repr(r)), consuming the NaN operand:",
+            "the NaN is silently lost here.",
+        ]
+    end
 end
 
 # Distinguish the IEEE DIVBYZERO case (an exact infinity from finite operands) from OVERFLOW

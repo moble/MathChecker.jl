@@ -134,6 +134,21 @@ end
 @inline Base.hypot(a::Checked, b::Real) = hypot(promote(a, b)...)
 @inline Base.hypot(a::Real, b::Checked) = hypot(promote(a, b)...)
 @inline Base.hypot(a::Checked, b::Checked) = hypot(promote(a, b)...)
+# Base's generic `copysign(::Real, ::Real)` and `flipsign(::Real, ::Real)` never promote,
+# so mixed calls would bypass the checks (a NaN sign operand would be consumed silently).
+for f in (:copysign, :flipsign)
+    @eval begin
+        @inline Base.$f(a::Checked, b::Real) = $f(promote(a, b)...)
+        @inline Base.$f(a::Real, b::Checked) = $f(promote(a, b)...)
+        # (Exact counterparts of Base's concrete `(Float64, Real)`, `(Float32, Real)`, and
+        # `(Signed, Real)` methods, which would otherwise be ambiguous with `(Real, Checked)`.)
+        @inline Base.$f(a::Float64, b::Checked) = $f(promote(a, b)...)
+        @inline Base.$f(a::Float32, b::Checked) = $f(promote(a, b)...)
+        @inline Base.$f(a::Signed, b::Checked) = $f(promote(a, b)...)
+        @inline Base.$f(a::Rational, b::Checked) = $f(promote(a, b)...)   # vs Base's (Rational, Real)
+        @inline Base.$f(a::Checked, b::Checked) = $f(promote(a, b)...)
+    end
+end
 
 @inline function Base.minmax(a::X, b::X) where {X<:Checked}
     lo, hi = minmax(a.val, b.val)
@@ -208,6 +223,20 @@ end
 @inline Base.:<=(a::X, b::X) where {X<:Checked} = _bare(X, <=, a.val <= b.val, a.val, b.val)
 @inline Base.cmp(a::X, b::X) where {X<:Checked} =
     _bare(X, cmp, cmp(a.val, b.val), a.val, b.val)
+# Base's mixed-type `isless` fallbacks are written in terms of `<`, which is checked; route
+# them through promotion to the unchecked same-type method instead, so that sorting mixed
+# collections works.  (`cmp`'s fallback is written in terms of `isless`; keep it checked.)
+# Restricted to Base's number types, like `isapprox`, to avoid ambiguities with packages
+# that define their own mixed `isless(::Foo, ::AbstractFloat)`.
+const BaseReal = Union{BaseFloat,Integer,Rational,AbstractIrrational}
+@inline Base.isless(a::Checked, b::Checked) = isless(promote(a, b)...)
+@inline Base.isless(a::Checked, b::BaseReal) = isless(promote(a, b)...)
+@inline Base.isless(a::BaseReal, b::Checked) = isless(promote(a, b)...)
+@inline Base.cmp(a::Checked, b::Checked) = cmp(promote(a, b)...)
+@inline Base.cmp(a::Checked, b::BaseReal) = cmp(promote(a, b)...)
+@inline Base.cmp(a::BaseReal, b::Checked) = cmp(promote(a, b)...)
+@inline Base.cmp(a::Checked, b::Rational) = cmp(promote(a, b)...)   # vs Base's (AbstractFloat, Rational)
+@inline Base.cmp(a::Rational, b::Checked) = cmp(promote(a, b)...)
 Base.hash(a::Checked, h::UInt) = hash(a.val, h)
 
 # `isapprox` is a comparison, not arithmetic: evaluate it on the raw values so that the
@@ -217,7 +246,6 @@ Base.isapprox(a::Checked, b::Checked; kwargs...) = isapprox(promote(a, b)...; kw
 # (Mixed methods are restricted to Base's number types to avoid ambiguities with packages
 # that define `isapprox(::Foo, ::Real)`; other mixes fall back to Base's generic method,
 # which computes `x - y` with the checks active.)
-const BaseReal = Union{BaseFloat,Integer,Rational,AbstractIrrational}
 Base.isapprox(a::Checked, b::BaseReal; kwargs...) = isapprox(promote(a, b)...; kwargs...)
 Base.isapprox(a::BaseReal, b::Checked; kwargs...) = isapprox(promote(a, b)...; kwargs...)
 Base.rtoldefault(::Type{X}) where {X<:Checked} = Base.rtoldefault(valuetype(X))

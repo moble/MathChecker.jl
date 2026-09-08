@@ -30,19 +30,25 @@ end
 
 # Operations with two "additive" operands, for the Cancellation and Swamping checks.
 const AdditiveOp = Union{typeof(+),typeof(-)}
-# The comparisons for which a NaN operand is an error under the NaN check.  (`isless`,
-# `isequal`, and `==` are deliberately excluded so that sorting and hashing work.)
-const OrderingOp = Union{typeof(<),typeof(<=),typeof(>),typeof(>=),typeof(cmp)}
 
 # ---------------------------------------------------------------------------------------
 # NaN
+#
+# A NaN operand signals whether or not the result is NaN — the semantics of a signaling
+# NaN.  This catches the three stages of a NaN's life: generation (`0/0`), propagation
+# (`NaN + 1`), and, most importantly, the "kill", where an operation consumes a NaN and
+# produces an ordinary value (`NaN < 1 → false`, `NaN^0 → 1`), silently turning a
+# detectable problem into a wrong answer.  The total-order functions (`==`, `isequal`,
+# `isless`) and the inspection predicates (`isnan`, …) bypass the checks entirely, so
+# sorting, hashing, and testing for NaN keep working.
+
+@inline _isnan(x::Number) = isnan(x)
+@inline _isnan(x) = false
+@inline _anynan() = false
+@inline _anynan(a, rest...) = _isnan(a) | _anynan(rest...)
 
 @inline function check_nan(op, r, args...)
-    isnan(r) && fail(NaNError(op, r, args))
-    return nothing
-end
-@inline function check_nan(op::OrderingOp, r::Union{Bool,Integer}, a, b)
-    (isnan(a) | isnan(b)) && fail(NaNError(op, r, (a, b)))
+    (_isnan(r) | _anynan(args...)) && fail(NaNError(op, r, args))
     return nothing
 end
 
