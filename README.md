@@ -11,11 +11,10 @@
 *Floating-point numbers that check their own arithmetic.*
 
 > **Written with Claude.** The design of this package was specified by
-> Michael Boyle, but the implementation, tests, and documentation were
-> produced by [Claude](https://claude.ai) (Anthropic's AI model)
-> working in Claude Code, and then reviewed by a human. Please read
-> the code with that in mind, and report anything suspicious as an
-> issue.
+> me, Mike Boyle, but the implementation, tests, and this
+> documentation were produced by Anthropic's Claude, and then I
+> reviewed it.  Please read the code with that in mind, and report
+> anything suspicious as an issue.
 
 `Checked{T}` wraps a floating-point number and behaves exactly like it
 — except that after every operation, the checks selected by its type

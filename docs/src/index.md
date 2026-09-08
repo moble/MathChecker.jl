@@ -9,9 +9,8 @@ CurrentModule = MathChecker
 !!! warning "Written with Claude"
     The design of this package was specified by me, Mike Boyle, but
     the implementation, tests, and this documentation were produced by
-    [Claude](https://claude.ai) (Anthropic's AI model) working in
-    Claude Code, and then I reviewed it.  Please read the code with
-    that in mind, and report anything suspicious as an issue.
+    Anthropic's Claude, and then I reviewed it.  Please read the code
+    with that in mind, and report anything suspicious as an issue.
 
 MathChecker provides one type, [`Checked`](@ref), which wraps any
 floating-point number and behaves exactly like it in arithmetic —
