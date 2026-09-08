@@ -48,7 +48,7 @@ Wrap the inputs of a computation and run it as usual:
 ```jldoctest quickstart
 julia> using MathChecker
 
-julia> x = Checked{Float64}(1.0)
+julia> x = Checked(1.0)          # the wrapped type is taken from the argument
 Checked{Float64}(1.0)
 
 julia> y = sqrt(x + 1) * 2       # ordinary arithmetic, checked at every step

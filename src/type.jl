@@ -43,7 +43,7 @@ unwrap values, arrays, tuples, and complex numbers; [`flags`](@ref) and
 # Examples
 
 ```jldoctest
-julia> x = Checked{Float64}(1.0)
+julia> x = Checked(1.0)
 Checked{Float64}(1.0)
 
 julia> x / 0

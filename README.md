@@ -42,7 +42,7 @@ instructions as a `Float64`.
 ```julia
 julia> using MathChecker
 
-julia> x = Checked{Float64}(1.0);          # Precision, NaN, and Inf checks on by default
+julia> x = Checked(1.0);                   # Precision, NaN, and Inf checks on by default
 
 julia> unchecked(sqrt(x + 1) * 2)
 2.8284271247461903
