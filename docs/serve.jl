@@ -3,7 +3,4 @@
 
 import LiveServer: servedocs
 
-servedocs(;
-    include_dirs=["src/",],
-    launch_browser=true,
-)
+servedocs(; include_dirs = ["src/"], launch_browser = true)
