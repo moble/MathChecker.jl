@@ -82,9 +82,11 @@ design notes.
 
 ## Installation
 
+This package is registered in Julia's General registry:
+
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/moble/MathChecker.jl")
+Pkg.add("MathChecker")
 ```
 
 ## Acknowledgements

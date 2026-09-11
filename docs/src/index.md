@@ -37,11 +37,11 @@ compiles to the same instructions as a `Float64`.
 
 ## Installation
 
-The package is not yet registered.  Install it from GitHub:
+This package is registered in Julia's General registry:
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/moble/MathChecker.jl")
+Pkg.add("MathChecker")
 ```
 
 ## Quick start
