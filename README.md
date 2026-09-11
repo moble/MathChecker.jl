@@ -8,6 +8,8 @@
 [![Coverage](https://codecov.io/gh/moble/MathChecker.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/moble/MathChecker.jl)
 [![BestieTemplate](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JuliaBesties/BestieTemplate.jl/main/docs/src/assets/badge.json)](https://github.com/JuliaBesties/BestieTemplate.jl)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22710818.svg)](https://doi.org/10.5281/zenodo.22710818)
+
 *Floating-point numbers that check their own arithmetic.*
 
 > **Written with Claude.** The design of this package was specified by
